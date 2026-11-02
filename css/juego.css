@@ -22,7 +22,11 @@ html, body { margin: 0; height: 100%; background: var(--noche); color: var(--tex
 button { font: inherit; color: inherit; cursor: pointer; }
 :focus-visible { outline: 3px solid var(--durazno); outline-offset: 2px; }
 
-#juego { position: fixed; inset: 0; overflow: hidden; user-select: none; }
+#juego { position: fixed; inset: 0; overflow: hidden; }
+/* Nada del juego se selecciona ni abre el menú de «mantener presionado» (en iPhone, dejar el dedo en un botón
+   seleccionaba texto y cortaba la caminata). Lo que se escribe sí se puede seleccionar. */
+body { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+input, textarea { user-select: text; -webkit-user-select: text; -webkit-touch-callout: default; }
 
 /* ---------- Escenario ---------- */
 #escenario { position: absolute; inset: 0 0 var(--franja) 0; overflow: hidden; }
@@ -822,7 +826,7 @@ div.ap-dato { cursor: default; }
 .cw-aviso.tenue::after { background: rgba(255, 243, 230, .5); box-shadow: none; }
 .cw-intro { position: absolute; top: max(5%, 40px); left: 50%; translate: -50% 0; width: min(560px, calc(100% - 40px)); text-align: center; color: #F4ECF2; font-family: var(--serif); font-style: italic; font-size: 1.08rem; padding: 16px 24px; transition: opacity 1s, translate 1s; text-shadow: 0 0 14px rgba(10, 6, 18, .95); z-index: 2; }
 .cw-intro::before { content: ""; position: absolute; inset: -30px -60px; background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(10, 6, 18, .62), rgba(10, 6, 18, 0) 74%); z-index: -1; }
-.cw-intro.fuera { opacity: 0; translate: -50% -10px; pointer-events: none; }
+.cw-intro.fuera, .cw:has(.cw-ori.visible, .cw-eleccion:not([hidden])) .cw-intro { opacity: 0; translate: -50% -10px; pointer-events: none; } /* el texto de entrada se quita si alguien habla o hay que elegir */
 .cw-eleccion { position: absolute; left: 50%; top: max(5%, 34px); translate: -50% 0; width: min(640px, calc(100% - 28px)); padding: 26px 40px 30px; display: grid; gap: 2px; z-index: 4; text-align: center; animation: aparece .45s ease both; }
 .cw-eleccion::before { content: ""; position: absolute; inset: -50px -90px; background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(10, 6, 18, .8) 0%, rgba(10, 6, 18, .6) 42%, rgba(10, 6, 18, .25) 66%, rgba(10, 6, 18, 0) 82%); filter: blur(10px); z-index: -1; pointer-events: none; }
 .cw-eleccion[hidden] { display: none; }
@@ -933,6 +937,11 @@ div.ap-dato { cursor: default; }
 #juego:has(.panel.inicio) .hud-btns, #juego:has(.panel.fin) .hud-btns, #juego:has(.panel.cine) .hud-btns { display: none; }
 #juego:has(.panel.visible:not(.inicio):not(.fin):not(.cine)) #hud { z-index: 56; }
 #juego:has(.panel.visible:not(.inicio):not(.fin):not(.cine)) #avisos { z-index: 57; }
+/* En las caminatas lo que se dice sale arriba al centro (.cw-ori): en pantallas angostas los avisos de consecuencia
+   bajan, centrados encima de los botones táctiles, para no taparlo. */
+@media (max-width: 1100px) {
+  #juego:has(#panel.visible .cw) #avisos { top: auto; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); left: 50%; translate: -50% 0; width: max-content; max-width: calc(100% - 32px); justify-items: center; }
+}
 .cw-hud { top: 62px; }
 
 /* Aviso de la portada cuando el navegador todavía no deja sonar */

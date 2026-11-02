@@ -384,7 +384,11 @@ const Caminar = (() => {
       b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); teclas[t] = true; });
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, () => { if (t !== 'usar') teclas[t] = false; }));
       b.addEventListener('click', (e) => e.stopPropagation());
+      /* sin esto, en iPhone el dedo quieto en el botón se vuelve «mantener presionado»: selecciona texto, abre la lupa y
+         cancela el paso. Los botones responden a pointerdown, así que no hace falta el clic que esto evita. */
+      b.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
     });
+    ui.raiz.addEventListener('contextmenu', (e) => e.preventDefault());
     setTimeout(() => el.panel.querySelector('.cw-intro')?.classList.add('fuera'), 7000);
     window.Sonido?.ambiente(n.mundo);
     ult = performance.now();
