@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hilo Rojo</title>
+  <meta name="description" content="Hilo Rojo: un juego narrativo de decisiones ambientado en El Encinal y Tepetlán, una semana antes de la Feria del Bordado.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232A1F3D'/%3E%3Cpath d='M4 16c4-8 8 4 12-4s4 2 4 2' fill='none' stroke='%23E0303F' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --noche: #1E1630; --malva: #4A3558; --rosa: #C76D7E; --durazno: #F2B6A0; --crema: #FBE9DD;
+      --hilo: #E0303F; --texto: #F6E8EE; --suave: #C5AFC4; --borde: rgba(246, 232, 238, .14);
+      --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --fuente: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--fuente); line-height: 1.65; color: var(--texto); background: linear-gradient(180deg, #2B1E3F 0%, #1E1630 40%, #160F24 100%); }
+    .portada { position: relative; min-height: 78vh; display: grid; align-items: end; overflow: hidden; }
+    .portada svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .portada-txt { position: relative; max-width: 960px; width: 100%; margin: 0 auto; padding: 0 20px 56px; }
+    .eyebrow { text-transform: uppercase; letter-spacing: .18em; font-size: .75rem; font-weight: 800; color: var(--durazno); margin: 0 0 10px; }
+    h1 { font-size: clamp(3rem, 10vw, 6rem); line-height: .95; margin: 0 0 16px; letter-spacing: -.04em; }
+    h1 span { color: var(--hilo); }
+    .lema { font-family: var(--serif); font-style: italic; font-size: clamp(1.15rem, 2.8vw, 1.5rem); max-width: 34ch; color: var(--crema); margin: 0 0 26px; }
+    .botones { display: flex; gap: 12px; flex-wrap: wrap; }
+    .boton { display: inline-flex; align-items: center; gap: 8px; padding: 13px 26px; border-radius: 999px; font-weight: 800; text-decoration: none; }
+    .boton.lleno { background: var(--hilo); color: #fff; }
+    .boton.vacio { border: 2px solid var(--borde); color: var(--texto); }
+    main { max-width: 960px; margin: 0 auto; padding: 24px 20px 80px; }
+    section { margin: 64px 0; }
+    h2 { font-size: 1.6rem; margin: 0 0 18px; letter-spacing: -.01em; }
+    h3 { margin: 0 0 4px; font-size: 1.05rem; }
+    p { margin: 0 0 14px; }
+    .sinopsis p { font-family: var(--serif); font-size: clamp(1.1rem, 2.2vw, 1.3rem); line-height: 1.75; color: var(--crema); max-width: 62ch; }
+    .sinopsis p:first-child::first-letter { font-size: 3.2em; float: left; line-height: .9; margin: 6px 10px 0 0; color: var(--hilo); font-weight: 700; }
+    .rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+    .tarjeta { background: rgba(255, 255, 255, .04); border: 1px solid var(--borde); border-radius: 18px; padding: 18px 20px; }
+    .tarjeta p { color: var(--suave); margin: 0; }
+    .ico { display: grid; place-items: center; width: 46px; height: 46px; margin-bottom: 10px; border-radius: 14px; background: rgba(224, 48, 63, .12); color: #F2A7B0; }
+    .ico svg { width: 24px; height: 24px; }
+    .ico-btn svg { width: 16px; height: 16px; fill: currentColor; display: block; }
+    .sonido-prop { position: fixed; right: 16px; bottom: 16px; z-index: 20; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--borde); background: rgba(22, 15, 36, .75); color: var(--texto); display: grid; place-items: center; cursor: pointer; backdrop-filter: blur(6px); }
+    .sonido-prop svg { width: 20px; height: 20px; }
+    .persona { display: flex; gap: 14px; align-items: flex-start; }
+    .silueta { flex: none; width: 56px; height: 56px; border-radius: 50%; background: var(--malva); display: grid; place-items: center; font-weight: 900; color: var(--crema); overflow: hidden; }
+    .silueta svg { width: 100%; height: 100%; display: block; }
+    .silueta .pj-boca-hab, .silueta .pj-cel { display: none; }
+    .persona small { display: block; color: var(--durazno); font-weight: 700; font-size: .78rem; margin-bottom: 2px; }
+    .lugares { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+    .lugar { position: relative; overflow: hidden; border-radius: 18px; min-height: 170px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: flex-end; border: 1px solid var(--borde); }
+    .lugar { isolation: isolate; }
+    .lugar::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, rgba(22, 15, 36, .78) 100%), var(--fondo); z-index: -1; }
+    .lugar h3 { font-size: 1.2rem; line-height: 1.25; margin-bottom: 6px; }
+    .lugar p { color: var(--crema); margin: 0; font-size: .95rem; }
+    .dias { display: flex; flex-wrap: wrap; gap: 10px; }
+    .dia { padding: 10px 16px; border-radius: 14px; border: 1px solid var(--borde); background: rgba(255, 255, 255, .03); }
+    .dia b { display: block; }
+    .dia small { color: var(--suave); }
+    .dia.listo { border-color: rgba(224, 48, 63, .6); }
+    .dia.listo small { color: #FF8C96; }
+    .inspira { display: flex; flex-wrap: wrap; gap: 8px; }
+    .inspira span { padding: 6px 14px; border-radius: 999px; background: rgba(255, 255, 255, .05); border: 1px solid var(--borde); font-size: .9rem; color: var(--crema); }
+    .cierre { text-align: center; padding: 40px 20px; border-radius: 24px; background: radial-gradient(circle at 50% 0%, rgba(224, 48, 63, .18), transparent 70%); border: 1px solid var(--borde); }
+    .cierre p { font-family: var(--serif); font-style: italic; color: var(--crema); font-size: 1.2rem; }
+    .cierre .botones { justify-content: center; }
+    footer { text-align: center; color: var(--suave); font-size: .85rem; padding: 0 20px 40px; }
+    footer a { color: var(--suave); }
+  </style>
+</head>
+<body>
+  <header class="portada">
+    <svg viewBox="0 0 1600 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3B2650"/><stop offset=".55" stop-color="#B0607A"/><stop offset="1" stop-color="#F2B6A0"/></linearGradient>
+        <linearGradient id="bruma" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2B1E3F" stop-opacity="0"/><stop offset="1" stop-color="#1E1630"/></linearGradient>
+      </defs>
+      <rect width="1600" height="700" fill="url(#cielo)"/>
+      <circle cx="1050" cy="470" r="150" fill="#FBE3D3" opacity=".85"/>
+      <path d="M0 470 L200 420 L420 455 L640 400 L860 445 L1100 395 L1350 440 L1600 410 V700 H0Z" fill="#B76A82" opacity=".75"/>
+      <path d="M0 540 L260 500 L520 530 L760 490 L1040 535 L1300 495 L1600 525 V700 H0Z" fill="#7E4C70"/>
+      <g fill="#4A3558"><rect x="190" y="430" width="10" height="160"/><rect x="120" y="380" width="160" height="70"/><rect x="150" y="470" width="70" height="36"/><polygon points="1300,600 1350,430 1400,600"/><polygon points="1370,600 1405,480 1440,600"/></g>
+      <g fill="#2B1E3F"><circle cx="760" cy="520" r="14"/><path d="M744 534 h32 l-3 50 h-26z"/><rect x="747" y="584" width="9" height="20"/><rect x="764" y="584" width="9" height="20"/><path d="M752 512 q-14 10 -12 34" stroke="#2B1E3F" stroke-width="6" fill="none"/><rect x="772" y="496" width="8" height="14" rx="2" fill="#FBE3D3"/></g>
+      <path d="M0 600 H1600 V700 H0Z" fill="#2B1E3F"/>
+      <path d="M-20 610 C200 560 360 660 560 600 S900 560 1060 610 1400 640 1620 590" fill="none" stroke="#E0303F" stroke-width="5" stroke-linecap="round"/>
+      <rect width="1600" height="700" fill="url(#bruma)"/>
+    </svg>
+    <div class="portada-txt">
+      <p class="eyebrow">Un juego narrativo de decisiones</p>
+      <h1>Hilo <span>Rojo</span></h1>
+      <p class="lema">Seis días para la feria. Una señal que va y viene. Y todo lo que uno deja a la vista sin darse cuenta.</p>
+      <div class="botones"><a class="boton lleno" href="index.html"><span class="ico-btn" data-ico="play"></span>Jugar</a><a class="boton vacio" href="#sinopsis">Conocer más</a></div>
+    </div>
+  </header>
+
+  <main>
+    <section id="sinopsis" class="sinopsis">
+      <h2>La historia</h2>
+      <p>Yare tiene diecisiete años y vive en El Encinal, donde la señal llega por rachas y hay que pararse junto al lavadero para mandar un mensaje. Entre semana toma la combi a Tepetlán para ir a la prepa; el resto del tiempo arregla los celulares de media familia, porque en su casa ella es “la que sabe”.</p>
+      <p>Este año, su abuela y las bordadoras de la cooperativa quieren vender en línea por primera vez, y le encargan la página a Yare. Faltan seis días para la Feria del Bordado.</p>
+      <p>Es una semana normal. O eso parece.</p>
+    </section>
+
+    <section>
+      <h2>Lo que vas a encontrar</h2>
+      <div class="rejilla">
+        <div class="tarjeta"><span class="ico" data-ico="hilo"></span><h3>Cada decisión deja un hilo</h3><p>Lo que eliges hoy puede regresar mañana… o el sábado.</p></div>
+        <div class="tarjeta"><span class="ico" data-ico="celular"></span><h3>Un celular en tu mano</h3><p>Chats, notas de voz y notificaciones que llegan cuando menos te lo esperas.</p></div>
+        <div class="tarjeta"><span class="ico" data-ico="tiempo"></span><h3>El tiempo también decide</h3><p>A veces no hay tiempo para pensarlo. Y quedarse callado también es una respuesta.</p></div>
+        <div class="tarjeta"><span class="ico" data-ico="libreta"></span><h3>La libreta de Yare</h3><p>Cada noche, Yare escribe cómo le fue. Con sus palabras, no con las tuyas.</p></div>
+        <div class="tarjeta"><span class="ico" data-ico="tejido"></span><h3>El tejido</h3><p>Al terminar cada día, mira el camino que bordaste y todo lo que dejaste de lado.</p></div>
+        <div class="tarjeta"><span class="ico" data-ico="caminar"></span><h3>A tu ritmo</h3><p>Camina por la prepa y escucha lo que se dice cuando creen que nadie oye.</p></div>
+        <div class="tarjeta"><span class="ico" data-ico="finales"></span><h3>Varios finales</h3><p>Cómo termine la semana depende de ti. Y de los demás.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Personajes</h2>
+      <div class="rejilla">
+        <div class="tarjeta persona"><span class="silueta" data-pj="yare">Y</span><div><small>Protagonista · 17</small><h3>Yare</h3><p>Competente, orgullosa y siempre cansada.</p></div></div>
+        <div class="tarjeta persona"><span class="silueta" data-pj="abuela">C</span><div><small>Su abuela</small><h3>Doña Chela</h3><p>Fundó la cooperativa. Habla por notas de voz.</p></div></div>
+        <div class="tarjeta persona"><span class="silueta" data-pj="lupita">L</span><div><small>Su prima</small><h3>Lupita</h3><p>Práctica, impaciente y con muchas ideas.</p></div></div>
+        <div class="tarjeta persona"><span class="silueta" data-pj="iker">I</span><div><small>Su mejor amigo</small><h3>Iker</h3><p>Siempre trae algo que enseñarte en su celular.</p></div></div>
+        <div class="tarjeta persona"><span class="silueta" data-pj="mari">M</span><div><small>Compañera</small><h3>Mari</h3><p>Viene de Las Ánimas. Se sienta junto a la ventana.</p></div></div>
+        <div class="tarjeta persona"><span class="silueta" data-pj="tono">T</span><div><small>Su hermano · 12</small><h3>Toño</h3><p>Quiere ser streamer. Muy pronto.</p></div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Lugares</h2>
+      <div class="lugares">
+        <div class="lugar" style="--fondo: linear-gradient(180deg, #2B2140 0%, #6B4C6E 65%, #C79186 100%)"><h3>El Encinal</h3><p>Encinos, bruma y una sola ventana encendida.</p></div>
+        <div class="lugar" style="--fondo: linear-gradient(180deg, #6B3D66 0%, #D9757F 60%, #F7B79D 100%)"><h3>La combi de las 6:20</h3><p>Treinta y ocho minutos de curvas y cumbia bajita.</p></div>
+        <div class="lugar" style="--fondo: linear-gradient(180deg, #9C86B9 0%, #D9A9B5 60%, #F5CDB8 100%)"><h3>Tepetlán</h3><p>La prepa, la plaza y la esquina de La Güera.</p></div>
+        <div class="lugar" style="--fondo: linear-gradient(180deg, #14212B 0%, #253A48 70%, #2F6E7E 100%)"><h3>Ciber El Cometa</h3><p>Doce pesos la hora. Una computadora “tiene virus”.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Capítulos</h2>
+      <div class="dias">
+        <div class="dia listo"><b>Prólogo · Domingo</b><small>Disponible</small></div>
+        <div class="dia listo"><b>Lunes</b><small>Disponible</small></div>
+        <div class="dia listo"><b>Martes</b><small>Disponible</small></div>
+        <div class="dia listo"><b>Miércoles</b><small>Disponible</small></div>
+        <div class="dia listo"><b>Jueves</b><small>Disponible</small></div>
+        <div class="dia listo"><b>Sábado · La feria</b><small>Disponible</small></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Inspirado en</h2>
+      <div class="inspira"><span>Life is Strange</span><span>Until Dawn</span><span>Detroit: Become Human</span><span>The Walking Dead (Telltale)</span><span>Oxenfree</span><span>A Normal Lost Phone</span><span>Florence</span><span>Ori and the Will of the Wisps</span><span>Alto’s Adventure</span></div>
+    </section>
+
+    <section class="cierre">
+      <p>El hilo ya está en la aguja.</p>
+      <div class="botones"><a class="boton lleno" href="index.html"><span class="ico-btn" data-ico="play"></span>Empezar a jugar</a></div>
+    </section>
+  </main>
+
+  <footer>Reto 3 · Construye Aplicaciones Web · Equipo: Zhadkiel, Axel, Fátima y Danna<br>Ambientes, pasos, teclado y lápiz: grabaciones de dominio público (CC0) de <a href="audio/CREDITOS.md">Freesound</a></footer>
+  <button class="sonido-prop" type="button" aria-label="Música"></button>
+  <script src="js/iconos.js?v=33"></script>
+  <script src="js/personajes.js?v=33"></script>
+  <script src="js/sonido.js?v=33"></script>
+  <script>
+    /* Iconos propios (sin emojis) */
+    document.querySelectorAll('[data-ico]').forEach(el => { el.innerHTML = Iconos.svg(el.dataset.ico, ''); });
+    /* La misma música de la portada; si el navegador no deja sonar sola, empieza con el primer toque o tecla.
+       El botón de la esquina la apaga o la prende (se guarda junto con los ajustes de sonido del juego). */
+    const botonSonido = document.querySelector('.sonido-prop');
+    const pintarSonido = () => { const on = Sonido.prefs().musica && Sonido.activo(); botonSonido.innerHTML = Iconos.svg(on ? 'sonido' : 'mudo', ''); botonSonido.title = on ? 'Apagar la música' : 'Prender la música'; };
+    Sonido.musica('portada');
+    Sonido.alCambiar(pintarSonido);
+    let sonaba = null; // cómo estaba justo antes de tocar (el mismo toque puede ser el que destrabe el sonido)
+    botonSonido.addEventListener('pointerdown', () => { sonaba = Sonido.activo(); });
+    botonSonido.addEventListener('click', () => {
+      const antes = sonaba ?? Sonido.activo(); sonaba = null;
+      Sonido.ajustar({ musica: antes ? !Sonido.prefs().musica : true });
+      pintarSonido();
+    });
+    /* Retratos de los personajes (los mismos del juego, recortados a la cara). */
+    document.querySelectorAll('.silueta[data-pj]').forEach(el => {
+      const id = el.dataset.pj, alto = { tono: .76, abuela: .9 }[id] || 1;
+      el.innerHTML = `<svg viewBox="${-52 * alto} ${-372 * alto} ${104 * alto} ${132 * alto}" aria-hidden="true">${Personajes.dibujar(id, { exp: 'neutral', semilla: 3 })}</svg>`;
+    });
+  </script>
+</body>
+</html>
