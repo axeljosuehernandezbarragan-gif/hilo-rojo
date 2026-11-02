@@ -293,6 +293,9 @@ const Motor = (() => {
     };
   }
 
+  /* La pista de controles de la portada cambia si se juega con teclado, pantalla táctil o mando */
+  Entrada.alCambiar(() => document.querySelectorAll('.pista-controles').forEach(e => { e.innerHTML = Entrada.resumen('portada'); }));
+
   /* ---------- Paneles a pantalla completa ---------- */
   function panel(html, clase) {
     el.panel.className = `panel visible ${clase}`;
@@ -537,7 +540,7 @@ const Motor = (() => {
           <button class="boton ${hay && hay.nodo !== H.inicio ? 'vacio' : ''}" data-a="nueva">Nueva partida</button>
           <a class="boton vacio" href="propuesta.html">Leer la propuesta</a>
         </div>
-        <p class="nota">Cada decisión deja un hilo. Algunos se cruzan días después.<br>Clic, espacio o Enter para avanzar · 1-4 para elegir.</p>
+        <p class="nota">Cada decisión deja un hilo. Algunos se cruzan días después.<br><span class="pista-controles">${Entrada.resumen('portada')}</span></p>
       </div>`, 'inicio');
     /* Si el navegador no deja sonar hasta que se toque algo, se avisa (y el aviso se va solo en cuanto suena) */
     const oir = document.createElement('div');

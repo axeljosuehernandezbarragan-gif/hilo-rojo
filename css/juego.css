@@ -154,6 +154,10 @@ input, textarea { user-select: text; -webkit-user-select: text; -webkit-touch-ca
 .img-msj svg { display: block; width: 100%; height: auto; }
 .tel-pie { background: #F4EFEA; border-radius: 0 0 28px 28px; padding: 8px; display: grid; gap: 6px; }
 .tel-pie:empty { padding: 0; }
+/* mientras no hay respuestas abajo, la pantalla termina en los mensajes: sus esquinas se redondean como el marco, y el
+   marco recorta con clip-path (overflow + border-radius no siempre recorta mientras el celular entra girando) */
+.tel-msjs:has(+ .tel-pie:empty) { border-radius: 0 0 28px 28px; }
+.tel-marco { clip-path: inset(0 round 38px); }
 .tel-pista { margin: 2px 6px; font-size: .72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #8A8090; }
 .tel-resp, .tel-seguir { text-align: left; padding: 10px 14px; border-radius: 18px; border: 0; background: #fff; color: #1F1A26; font-size: .92rem; line-height: 1.35; box-shadow: 0 1px 2px rgba(0, 0, 0, .1); animation: aparece .3s both; }
 .tel-resp:hover { background: #E8F6E2; }
@@ -826,7 +830,7 @@ div.ap-dato { cursor: default; }
 .cw-aviso.tenue::after { background: rgba(255, 243, 230, .5); box-shadow: none; }
 .cw-intro { position: absolute; top: max(5%, 40px); left: 50%; translate: -50% 0; width: min(560px, calc(100% - 40px)); text-align: center; color: #F4ECF2; font-family: var(--serif); font-style: italic; font-size: 1.08rem; padding: 16px 24px; transition: opacity 1s, translate 1s; text-shadow: 0 0 14px rgba(10, 6, 18, .95); z-index: 2; }
 .cw-intro::before { content: ""; position: absolute; inset: -30px -60px; background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(10, 6, 18, .62), rgba(10, 6, 18, 0) 74%); z-index: -1; }
-.cw-intro.fuera, .cw:has(.cw-ori.visible, .cw-eleccion:not([hidden])) .cw-intro { opacity: 0; translate: -50% -10px; pointer-events: none; } /* el texto de entrada se quita si alguien habla o hay que elegir */
+.cw-intro.fuera, .cw:has(.cw-ori.visible, .cw-eleccion:not([hidden]), .cw-guia:not(.fuera)) .cw-intro { opacity: 0; translate: -50% -10px; pointer-events: none; } /* el texto de entrada se quita si alguien habla o hay que elegir */
 .cw-eleccion { position: absolute; left: 50%; top: max(5%, 34px); translate: -50% 0; width: min(640px, calc(100% - 28px)); padding: 26px 40px 30px; display: grid; gap: 2px; z-index: 4; text-align: center; animation: aparece .45s ease both; }
 .cw-eleccion::before { content: ""; position: absolute; inset: -50px -90px; background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(10, 6, 18, .8) 0%, rgba(10, 6, 18, .6) 42%, rgba(10, 6, 18, .25) 66%, rgba(10, 6, 18, 0) 82%); filter: blur(10px); z-index: -1; pointer-events: none; }
 .cw-eleccion[hidden] { display: none; }
@@ -948,3 +952,46 @@ div.ap-dato { cursor: default; }
 .aviso-sonido { position: absolute; left: 50%; bottom: 18px; translate: -50% 0; z-index: 51; display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; background: rgba(22, 15, 36, .6); border: 1px solid rgba(255, 255, 255, .16); color: var(--crema); font-size: .8rem; font-weight: 700; pointer-events: none; transition: opacity .6s; }
 .aviso-sonido.fuera { opacity: 0; }
 .aviso-sonido .ico { width: 16px; height: 16px; }
+
+/* ---------- Cómo moverte (al empezar cada caminata) ----------
+   Tapa casi toda la pantalla con el mismo desvanecido de los diálogos de las caminatas; se quita con Enter, Espacio,
+   clic, un toque o A en el mando. Las teclas cambian según con qué se juega (data-entrada en <html>). */
+.cw-guia { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; padding: 24px 16px; cursor: pointer;
+  background: radial-gradient(ellipse 72% 70% at 50% 50%, rgba(10, 6, 18, .9) 0%, rgba(10, 6, 18, .8) 46%, rgba(10, 6, 18, .55) 76%, rgba(10, 6, 18, .35) 100%);
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); animation: aparece .6s ease both; transition: opacity .55s ease; }
+.cw-guia.fuera { opacity: 0; pointer-events: none; }
+.cw-guia-caja { width: min(640px, 100%); max-height: 100%; overflow-y: auto; text-align: center; color: #F4ECF2; }
+.cw-guia .sup { margin: 0 0 18px; font-size: .78rem; font-weight: 800; letter-spacing: .3em; text-transform: uppercase; color: var(--durazno); }
+.cw-guia-filas { display: grid; gap: 14px; text-align: left; }
+.cw-guia-fila { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; gap: 18px; align-items: center; padding-bottom: 14px; border-bottom: 1px solid rgba(205, 215, 255, .14); }
+.cw-guia-fila:last-child { border-bottom: 0; padding-bottom: 0; }
+.cw-guia-teclas { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; }
+.cw-guia-teclas .o { font-family: var(--serif); font-style: italic; color: #B9A9BA; margin: 0 2px; }
+.cw-guia-que b { display: block; font-size: 1.04rem; }
+.cw-guia-que b small { font-weight: 600; color: #B9A9BA; font-size: .82rem; }
+.cw-guia-que span { display: block; margin-top: 3px; font-family: var(--serif); font-style: italic; color: #DCCDD9; line-height: 1.45; }
+.cw-guia-seguir { margin: 24px 0 0; font-size: .95rem; color: #F4ECF2; animation: parpadeo 2.4s ease-in-out infinite; }
+kbd { display: inline-grid; place-items: center; min-width: 34px; height: 34px; padding: 0 9px; border-radius: 8px; border: 1px solid rgba(251, 233, 221, .45); border-bottom-width: 3px; background: rgba(255, 255, 255, .08); font-family: var(--sans); font-size: .86rem; font-weight: 800; color: #FBE9DD; line-height: 1; white-space: nowrap; }
+kbd.m { border-radius: 999px; min-width: 34px; }
+kbd.xb-a { color: #9BE08A; } kbd.xb-b { color: #FF8A8A; } kbd.xb-x { color: #8EC5FF; }
+kbd.ps-x { color: #9DB8FF; } kbd.ps-o { color: #FF8A9A; } kbd.ps-c { color: #F2A7D8; }
+.cw-pista kbd, .pista-controles kbd { min-width: 22px; height: 22px; padding: 0 5px; font-size: .72rem; border-bottom-width: 2px; }
+.cw-guia-b { display: inline-grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .3); background: rgba(22, 15, 36, .7); color: #fff; font-style: normal; }
+.cw-guia-b .ico { width: 22px; height: 22px; }
+.cw-guia-b.rojo, .cw-guia-b.texto { width: auto; padding: 0 16px; border-radius: 999px; font-weight: 800; font-size: .9rem; }
+.cw-guia-b.rojo { background: var(--hilo); border-color: transparent; }
+.cw-guia-b.texto { border-radius: 10px; background: rgba(255, 255, 255, .1); }
+@media (max-width: 640px) {
+  .cw-guia-fila { grid-template-columns: 1fr; gap: 6px; text-align: center; }
+  .cw-guia-teclas { justify-content: center; }
+  .cw-guia .sup { margin-bottom: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .cw-guia, .cw-guia-seguir { animation: none; } .cw-guia { transition: none; } }
+/* si alguien toca la pantalla (una laptop con pantalla táctil), también salen los botones de la caminata */
+[data-entrada="tactil"] .cw-tactil { display: flex; }
+/* con mando, el botón con foco se marca bien (la cruceta pasa de uno a otro) */
+[data-entrada="mando"] button:focus, [data-entrada="mando"] a:focus { outline: 3px solid var(--durazno); outline-offset: 3px; }
+[data-entrada="mando"] .opcion:focus { background: rgba(255, 228, 200, .14); }
+.aviso-mando { position: fixed; left: 50%; bottom: 22px; translate: -50% 0; z-index: 90; display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-radius: 999px; background: rgba(22, 15, 36, .86); border: 1px solid rgba(255, 255, 255, .18); color: var(--crema); font-size: .9rem; pointer-events: none; animation: aparece .35s ease both; transition: opacity .5s ease; }
+.aviso-mando.fuera { opacity: 0; }
+.aviso-mando .ico { width: 20px; height: 20px; }

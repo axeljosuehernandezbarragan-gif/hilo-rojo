@@ -1,5 +1,6 @@
 /* Hilo Rojo · secuencias para caminar a voluntad (de lado, con paralaje). No hay saltos ni se pueden omitir.
-   Controles: ← → / A D para caminar, Q o Shift (o el botón de la oreja) para prestar atención, E / Enter para interactuar.
+   Controles: ← → / A D para caminar, Q o Shift (o el botón de la oreja) para prestar atención, E / Enter para interactuar;
+   con mando, lo traduce entrada.js. Al empezar sale «Cómo moverte» (guiaHTML), que cambia según con qué se juega.
    Prestar atención acerca la cámara al grupo más cercano, baja el ruido de alrededor y deja leer lo que murmuran.
    La vibra es la de Ori: tranquila y con misterio. Hay rayos de luz, polvo que flota y cosas en primer plano
    (siluetas de gente, ramas, rocas) que pasan entre la cámara y Yare. La gente del fondo está parada sobre el
@@ -17,6 +18,7 @@ const Caminar = (() => {
   const ALTO = 350 * ESC;        // estatura (para poner los textos y avisos encima de la gente)
   let s, el, listo, n, mundo, j, cam, raf, ult, teclas, ui, activo, pausa, comp, oyendo, avisos;
   let quieta = 0; // mientras se escribe lo que se dijo al interactuar, Yare no se mueve (guarda el turno de ese texto)
+  let guia = false; // la pantalla de «Cómo moverte» que sale al empezar cada caminata
 
   const azar = (semilla) => { let a = (semilla * 9301 + 49297) >>> 0; return () => { a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; }; };
 
@@ -350,9 +352,10 @@ const Caminar = (() => {
         <div class="cw-petalos">${mundo.petalos === 'transparent' || mundo.luz ? '' : Array.from({ length: 12 }, (_, i) => `<i style="--x:${(i * 61) % 100}%;--y:${20 + (i * 37) % 65}%;--d:${9 + (i % 5) * 1.5}s;--r:${-(i * 1.7) % 9}s;background:${mundo.petalos}"></i>`).join('')}</div>
         <div class="cw-vineta"></div>
         ${n.hud ? '<div class="cw-hud"></div>' : ''}
-        <div class="cw-intro">${Motor.formato(Motor.val(n.intro) || '')}<small>← → caminar · Q prestar atención · E interactuar</small></div>
+        <div class="cw-intro">${Motor.formato(Motor.val(n.intro) || '')}<small class="cw-pista">${Entrada.resumen()}</small></div>
         <div class="cw-ori" aria-live="polite"></div>
         <div class="cw-eleccion" hidden></div>
+        <div class="cw-guia" role="dialog" aria-modal="true" aria-label="Cómo moverte">${guiaHTML()}</div>
         <div class="cw-tactil">
           <button class="cw-b" data-t="izq" aria-label="Caminar a la izquierda">${Iconos.svg('izq')}</button>
           <button class="cw-b" data-t="der" aria-label="Caminar a la derecha">${Iconos.svg('der')}</button>
@@ -389,14 +392,63 @@ const Caminar = (() => {
       b.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
     });
     ui.raiz.addEventListener('contextmenu', (e) => e.preventDefault());
-    setTimeout(() => el.panel.querySelector('.cw-intro')?.classList.add('fuera'), 7000);
+    guia = true;
+    el.panel.querySelector('.cw-guia').addEventListener('click', (e) => { e.stopPropagation(); cerrarGuia(); });
     window.Sonido?.ambiente(n.mundo);
     ult = performance.now();
     raf = requestAnimationFrame(cuadro);
   }
 
   function aviso(id, texto) { if (avisos[id]) return; avisos[id] = true; Motor.hilo(texto); }
-  const tactil = () => matchMedia('(pointer: coarse)').matches;
+
+  /* ---------- Cómo moverte: tapa casi toda la pantalla al empezar cada caminata, con el mismo desvanecido que los
+     diálogos. Dice qué teclas (o botones, o botones del mando) sirven; cambia sola si se cambia de control. ---------- */
+  function guiaHTML() {
+    const m = Entrada.modo(), kb = (t) => `<kbd>${t}</kbd>`, o = '<span class="o">o</span>';
+    const fila = (teclas, titulo, texto) => `<div class="cw-guia-fila"><div class="cw-guia-teclas">${teclas}</div><div class="cw-guia-que"><b>${titulo}</b>${texto ? `<span>${texto}</span>` : ''}</div></div>`;
+    const ESCUCHA = 'Cerca de un grupo, mantenlo para oír lo que murmuran. A algunas personas solo les puedes contestar después de escucharlas.';
+    const USAR = 'Cuando sale una acción sobre alguien o algo, puedes hablarle o mirarlo. Lo que se puede mirar brilla un poco.';
+    const filas = m === 'mando' ? [
+      fila(`${kb('Stick izquierdo')} ${o} ${kb('◀')}${kb('▶')}`, 'Caminar', ''),
+      fila(`${Entrada.boton('x')} ${o} ${Entrada.boton('lt')}`, 'Prestar atención <small>(mantener)</small>', ESCUCHA),
+      fila(Entrada.boton('a'), 'Interactuar', USAR),
+      fila(`${kb('▲')}${kb('▼')} y ${Entrada.boton('a')}`, 'Elegir qué decir', '')
+    ] : m === 'tactil' ? [
+      fila(`<i class="cw-guia-b">${Iconos.svg('izq')}</i><i class="cw-guia-b">${Iconos.svg('der')}</i>`, 'Caminar', 'Mantén presionados los botones de abajo.'),
+      fila(`<i class="cw-guia-b">${Iconos.svg('oir')}</i>`, 'Prestar atención <small>(mantener)</small>', ESCUCHA),
+      fila('<i class="cw-guia-b rojo">Hablar</i>', 'Interactuar', 'Este botón aparece cuando puedes hablar con alguien o mirar algo.'),
+      fila('<i class="cw-guia-b texto">Respuesta</i>', 'Elegir qué decir', 'Toca una de las respuestas.')
+    ] : [
+      fila(`${kb('←')}${kb('→')} ${o} ${kb('A')}${kb('D')}`, 'Caminar', ''),
+      fila(`${kb('Q')} ${o} ${kb('Shift')}`, 'Prestar atención <small>(mantener)</small>', ESCUCHA),
+      fila(`${kb('E')} ${o} ${kb('Enter')}`, 'Interactuar', USAR),
+      fila(`${kb('1')}–${kb('4')} ${o} clic`, 'Elegir qué decir', '')
+    ];
+    const seguir = m === 'mando' ? `Presiona ${Entrada.boton('a')} para empezar` : m === 'tactil' ? 'Toca la pantalla para empezar' : `Presiona ${kb('Enter')}, ${kb('Espacio')} o haz clic para empezar`;
+    return `<div class="cw-guia-caja"><p class="sup">Cómo moverte</p><div class="cw-guia-filas">${filas.join('')}</div><p class="cw-guia-seguir">${seguir}</p></div>`;
+  }
+  function cerrarGuia() {
+    if (!guia) return;
+    guia = false;
+    const g = el.panel.querySelector('.cw-guia');
+    g.classList.add('fuera');
+    setTimeout(() => g.remove(), reducido() ? 0 : 600);
+    window.Sonido?.efecto('elegir');
+    ult = performance.now();
+    setTimeout(() => el.panel.querySelector('.cw-intro')?.classList.add('fuera'), 7000);
+  }
+  /* Las etiquetas de lo que se puede hacer cambian según con qué se juega */
+  function prefijo(accion) {
+    const m = Entrada.modo(), ps = Entrada.tipo() === 'ps';
+    if (m === 'tactil') return accion === 'oir' ? Iconos.svg('oir') : '';
+    if (m === 'mando') return accion === 'oir' ? (ps ? '□ ·' : 'X ·') : (ps ? '✕ · ' : 'A · ');
+    return accion === 'oir' ? 'Q ·' : 'E · ';
+  }
+  Entrada.alCambiar(() => {
+    if (!activo || !el) return;
+    const g = el.panel.querySelector('.cw-guia:not(.fuera)'); if (g) g.innerHTML = guiaHTML();
+    const p = el.panel.querySelector('.cw-pista'); if (p) p.innerHTML = Entrada.resumen();
+  });
   const reducido = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
   const espera = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -405,6 +457,7 @@ const Caminar = (() => {
     if (!activo) return;
     if (!document.getElementById('menu-juego')?.hidden) { teclas.izq = teclas.der = teclas.oir = teclas.usar = false; return; } // con el menú abierto no se camina
     const k = e.key.toLowerCase();
+    if (guia) { if ([' ', 'enter', 'e'].includes(k)) { e.preventDefault(); cerrarGuia(); } e.stopPropagation(); return; }
     if (pausa) { if (/^[1-4]$/.test(k)) ui.eleccion.querySelectorAll('button')[+k - 1]?.click(); return; }
     if (['arrowleft', 'a'].includes(k)) teclas.izq = true;
     if (['arrowright', 'd'].includes(k)) teclas.der = true;
@@ -424,7 +477,7 @@ const Caminar = (() => {
   function cuadro(t) {
     if (!activo) return;
     const dt = Math.min(.05, (t - ult) / 1000); ult = t;
-    if (!pausa) mover(dt, t);
+    if (!pausa && !guia) mover(dt, t);
     moverGente(dt);
     moverPasantes(dt);
     dibujar(t);
@@ -519,7 +572,7 @@ const Caminar = (() => {
     if (oyendo) oyendo.oidoT += dt;
     if (escuchando && !foco) aviso('nadie', 'No hay nadie hablando cerca.');
     const cercaDeGrupo = ui.puntos.some(p => p.pt.ambiente && !Motor.val(p.pt.claro) && !p.hecho && Math.abs(j.x - p.pt.x) < 480);
-    if (cercaDeGrupo) aviso('oir', tactil() ? 'Mantén presionado el botón de la oreja para prestar atención a lo que murmuran.' : 'Mantén Q (o Shift) para prestar atención a lo que murmuran.');
+    if (cercaDeGrupo) aviso('oir', ({ tactil: 'Mantén presionado el botón de la oreja para prestar atención a lo que murmuran.', mando: `Mantén ${Entrada.tipo() === 'ps' ? '□ (o L2)' : 'X (o LT)'} para prestar atención a lo que murmuran.` })[Entrada.modo()] || 'Mantén Q (o Shift) para prestar atención a lo que murmuran.');
 
     /* Puntos de interés. A un grupo que murmura solo se le puede contestar si de verdad se le puso atención
        (¿cómo le reclamas algo que no oíste?). Lo que se puede mirar se ilumina un poco al acercarse. */
@@ -536,7 +589,7 @@ const Caminar = (() => {
       p.aviso.classList.toggle('tenue', p === cercano && !elegible);
       p.grupo?.classList.toggle('cerca', p === elegible);
       p.pared?.classList.toggle('cerca', p === elegible);
-      if (p === cercano) p.aviso.innerHTML = elegible ? `${tactil() ? '' : 'E · '}${Motor.esc(Motor.val(p.pt.interaccion?.etiqueta || p.pt.etiqueta || 'Mirar'))}` : `${tactil() ? Iconos.svg('oir') : 'Q ·'} Prestar atención`;
+      if (p === cercano) p.aviso.innerHTML = elegible ? `${prefijo('usar')}${Motor.esc(Motor.val(p.pt.interaccion?.etiqueta || p.pt.etiqueta || 'Mirar'))}` : `${prefijo('oir')} Prestar atención`;
     });
     ui.usar.hidden = !elegible || !!quieta;
     if (elegible) ui.usar.textContent = Motor.val(elegible.pt.interaccion?.etiqueta || elegible.pt.etiqueta || 'Mirar');
@@ -744,7 +797,7 @@ const Caminar = (() => {
   }
 
   /* Solo para las pruebas automáticas (no hay botón para saltarse el recorrido). */
-  const _prueba = { x: () => j.x, quieta: () => !!quieta, pasantes: () => ui.pasantes.length, pasar: () => pasar(), irA: (x) => { j.x = x; j.y = mundo.alto(x); }, terminar: () => terminar(), oyendo: () => !!oyendo, comp: () => comp && { x: comp.x, dir: comp.dir } };
+  const _prueba = { x: () => j.x, quieta: () => !!quieta, pasantes: () => ui.pasantes.length, pasar: () => pasar(), irA: (x) => { j.x = x; j.y = mundo.alto(x); }, guia: () => guia, cerrarGuia: () => cerrarGuia(), terminar: () => terminar(), oyendo: () => !!oyendo, comp: () => comp && { x: comp.x, dir: comp.dir } };
 
   return { iniciar, _prueba, detener: () => { if (activo) { activo = false; cancelAnimationFrame(raf); removeEventListener('keydown', abajo); removeEventListener('keyup', arriba); } } };
 })();
