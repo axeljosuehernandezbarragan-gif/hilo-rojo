@@ -6,7 +6,8 @@
      Cruceta ▲ ▼ (o stick)         → pasar de un botón a otro (respuestas, menús)
      A / ✕                          → el botón con foco; si no hay, Enter (avanzar, interactuar)
      X / □, LB / L1, LT / L2        → Q (prestar atención, mientras se mantiene)
-     B / ○                          → Escape (cerrar el menú)      Y / △ → texto rápido      Start / Options → menú */
+     B / ○                          → Escape (cerrar el menú)      Y / △ → texto rápido      Start / Options → menú
+     Stick derecho ▲ ▼              → desplazar lo que tenga barra (chats, el celular explorable, la libreta, el tejido) */
 const Entrada = (() => {
   'use strict';
   let modo = matchMedia('(pointer: coarse)').matches ? 'tactil' : 'teclado';
@@ -40,7 +41,7 @@ const Entrada = (() => {
   }
   /* Resumen de una línea para la portada y para el texto de entrada de las caminatas */
   function resumen(cual) {
-    if (cual === 'portada') return modo === 'mando' ? `${BOTON.a()} para avanzar · cruceta ▲ ▼ para elegir` : modo === 'tactil' ? 'Toca la pantalla para avanzar y toca una respuesta para elegir.' : 'Clic, espacio o Enter para avanzar · 1-4 para elegir.';
+    if (cual === 'portada') return modo === 'mando' ? `${BOTON.a()} para avanzar · cruceta ▲ ▼ para elegir · stick derecho para desplazar` : modo === 'tactil' ? 'Toca la pantalla para avanzar y toca una respuesta para elegir.' : 'Clic, espacio o Enter para avanzar · 1-4 para elegir.';
     if (modo === 'mando') return `Stick o cruceta: caminar · ${BOTON.x()} escuchar · ${BOTON.a()} interactuar`;
     if (modo === 'tactil') return '';
     return '← → caminar · Q prestar atención · E interactuar';
@@ -115,9 +116,29 @@ const Entrada = (() => {
     teclaEv('keydown', 'Enter'); teclaEv('keyup', 'Enter');
   }
 
+  /* Stick derecho: desplaza lo que tenga barra de desplazamiento, como la ruedita del mouse. Primero lo que contiene
+     al botón con foco; si no, lo de más adentro en lo que está al frente (la pantalla del celular antes que el panel
+     que la rodea). Si ya llegó al final, sigue con el de afuera. */
+  const puede = (e) => { const st = getComputedStyle(e); return /(auto|scroll)/.test(st.overflowY) && e.scrollHeight > e.clientHeight + 2 && e.getClientRects().length > 0; };
+  const hondo = (e) => { let n = 0; for (; e; e = e.parentElement) n++; return n; };
+  function desplazables() {
+    const delFoco = [];
+    for (let e = document.activeElement; e && e !== document.body; e = e.parentElement) if (puede(e)) delFoco.push(e);
+    if (delFoco.length) return delFoco;
+    for (const sel of ['#menu-juego:not([hidden])', '#tel.visible', '#panel.visible']) {
+      const r = document.querySelector(sel);
+      if (!r) continue;
+      const cs = [r, ...r.querySelectorAll('*')].filter(puede);
+      if (cs.length) return cs.sort((a, b) => hondo(b) - hondo(a));
+    }
+    return [];
+  }
+  let rodando = null, tAntes = 0;
+
   const ZONA = .45; // zona muerta del stick
-  function leer() {
+  function leer(t = performance.now()) {
     raf = null;
+    const dt = Math.min(.05, Math.max(0, (t - tAntes) / 1000)); tAntes = t;
     const lista = [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter(Boolean);
     if (!lista.length) { if (mandos.size) raf = requestAnimationFrame(leer); return; }
     const g = lista[0], b = (i) => !!g.buttons[i]?.pressed, x = g.axes[0] || 0, y = g.axes[1] || 0;
@@ -138,6 +159,14 @@ const Entrada = (() => {
     if (nuevo('b')) { teclaEv('keydown', 'Escape'); teclaEv('keyup', 'Escape'); }
     if (nuevo('y')) document.getElementById('rapido')?.click();
     if (nuevo('start')) document.getElementById('menu')?.click();
+    const ry = g.axes[3] || 0;
+    if (Math.abs(ry) > .2) {
+      poner('mando');
+      if (!rodando || rodando.some(e => !e.isConnected)) rodando = desplazables();
+      const d = Math.sign(ry) * (Math.abs(ry) - .2) / .8 * 1100 * dt;
+      const e = rodando.find(e => d > 0 ? e.scrollTop + e.clientHeight < e.scrollHeight - 1 : e.scrollTop > 0);
+      e?.scrollBy({ top: d, behavior: 'instant' });
+    } else rodando = null;
     Object.assign(antes, ahora);
     raf = requestAnimationFrame(leer);
   }
